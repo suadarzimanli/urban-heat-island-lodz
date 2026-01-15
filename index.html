@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Urban Heat Island — Łódź</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-title">Urban Heat Island</div>
+        <div class="brand-sub">Łódź • NDVI • LST • Grid stats</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Layers</div>
+
+        <label class="checkrow">
+          <input type="checkbox" id="chkCity" checked />
+          <span>City boundary</span>
+        </label>
+
+        <label class="checkrow">
+          <input type="checkbox" id="chkGridStats"/>
+          <span>Grid stats</span>
+        </label>
+
+        <label class="checkrow">
+          <input type="checkbox" id="chkNdviTif" />
+          <span>NDVI classified (GeoTIFF)</span>
+        </label>
+
+        <div class="sliderrow" id="ndviOpacityRow" style="display:none;">
+          <span>NDVI opacity</span>
+          <input type="range" id="ndviOpacity" min="0" max="1" step="0.05" value="0.7">
+        </div>
+
+        <label class="checkrow">
+          <input type="checkbox" id="chkLstTif" />
+          <span>LST classified (GeoTIFF)</span>
+        </label>
+
+        <div class="sliderrow" id="lstOpacityRow" style="display:none;">
+          <span>LST opacity</span>
+          <input type="range" id="lstOpacity" min="0" max="1" step="0.05" value="0.65">
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Compare</div>
+        <div class="btnrow">
+          <button class="btn btn-ghost" id="btnShowNdvi" type="button">Show NDVI (N)</button>
+          <button class="btn btn-ghost" id="btnShowLst" type="button">Show LST (T)</button>
+        </div>
+        <div class="hint">
+          Tip: use <b>N</b> / <b>T</b> keys to switch quickly.
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Legend</div>
+        <div id="legend" class="legend">
+          <div class="legend-hint">Turn on NDVI/LST to see legend.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">NDVI–LST relationship</div>
+
+        <div class="hint">
+          A global linear regression was computed at the grid-cell level
+          to assess how vegetation relates to land surface temperature.
+        </div>
+
+        <div class="stats">
+          <div class="statline"><span>Explained variance</span><strong>R² = 0.132</strong></div>
+          <div class="statline"><span>Trend</span><strong>Negative (cooling)</strong></div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <button class="btn btn-ghost" id="btnShowRegression" type="button">
+          View NDVI vs LST plot
+        </button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Analysis</div>
+
+        <button class="btn" id="btnExportMapPng" type="button">
+          Export map screenshot (PNG)
+        </button>
+
+        <div class="hint" id="exportHint">
+          Exports use what is currently visible on the map.
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Project</div>
+
+        <button class="btn" id="btnAbout" type="button">About / Methods</button>
+        <hr>
+        <a class="btn btn-ghost" href="data/ndvi_lst_grid_stats.csv" download>
+          Download full CSV report
+        </a>
+
+        <div class="stats">
+          <div class="statline"><span>NDVI vs LST</span><strong>R² = 0.132</strong></div>
+          <div class="statline"><span>Focus</span><strong>Urban heat patterns</strong></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>Leaflet • GeoTIFF • Grid analytics</span>
+        <hr>
+        <h3>© 2026 — Research project by Suad Arzimanli<h3>
+      </div>
+    </aside>
+
+    <main class="mapwrap">
+      <div id="map"></div>
+      <button class="toggleSidebar" id="toggleSidebar" type="button">☰</button>
+
+      <div class="modal" id="aboutModal" style="display:none;">
+        <div class="modal-card">
+          <div class="modal-header">
+            <div>
+              <div class="modal-title">Urban Heat Island Mapping — Łódź</div>
+              <div class="modal-sub">NDVI, LST, grid statistics + correlation</div>
+            </div>
+            <button class="iconbtn" id="btnCloseAbout" type="button">✕</button>
+          </div>
+
+          <div class="modal-body">
+            <h3>What this shows</h3>
+            <ul>
+              <li><b>NDVI</b> classified surface (vegetation intensity)</li>
+              <li><b>LST</b> classified surface (temperature intensity)</li>
+              <li><b>Grid statistics</b> from CSV (NDVI median, LST mean per cell)</li>
+            </ul>
+
+            <h3>Method (high level)</h3>
+            <ol>
+              <li>Compute NDVI & LST in ArcGIS Pro / Remote Sensing workflow</li>
+              <li>Classify each raster (reclass) into discrete classes</li>
+              <li>Aggregate to grid (median NDVI, mean LST)</li>
+              <li>Correlation in Python: NDVI vs LST → <b>R² = 0.132</b></li>
+            </ol>
+
+            <h3>Interpretation</h3>
+            <p>
+              R² indicates a weak linear relationship at this scale/time snapshot.
+              This can improve with seasonal sampling, land-cover stratification,
+              or hotspot analysis rather than pure global correlation.
+            </p>
+
+            <div class="modal-note">
+              Tip: turn on NDVI and LST and compare visually. Use grid popups for exact numbers.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal" id="regressionModal" style="display:none;">
+        <div class="modal-card">
+          <div class="modal-header">
+            <div>
+              <div class="modal-title">NDVI vs LST — Łódź</div>
+              <div class="modal-sub">Grid-based linear regression (Python / Jupyter)</div>
+            </div>
+            <button class="iconbtn" id="btnCloseRegression" type="button">✕</button>
+          </div>
+
+          <div class="modal-body">
+            <img
+              src="images/ndvi_vs_lst_lodz_cleaned.png"
+              alt="NDVI vs LST regression plot"
+              style="width:100%; border-radius:14px; border:1px solid var(--border);"
+            />
+
+            <p style="margin-top:12px;">
+              Each point represents a grid cell. Higher NDVI values are generally associated with
+              lower land surface temperature, but the relationship is weak (R² = 0.132),
+              indicating additional urban factors influence LST.
+            </p>
+
+            <div class="modal-note">
+              Computed from grid statistics (NDVI median, LST mean) using linear regression.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.1/papaparse.min.js"></script>
+  <script src="https://unpkg.com/geotiff/dist-browser/geotiff.js"></script>
+  <script src="https://unpkg.com/georaster/dist/georaster.browserify.min.js"></script>
+  <script src="https://unpkg.com/georaster-layer-for-leaflet/dist/georaster-layer-for-leaflet.min.js"></script>
+  <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
