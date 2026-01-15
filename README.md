@@ -37,17 +37,7 @@ Detailed preprocessing was conducted using **ArcGIS Pro** and **Python (Pandas, 
 ---
 
 ## 📁 Project Structure
-index.html
-css/style.css
-js/script.js
-data/
-├─ NDVI_classified.tif
-├─ LST_classified.tif
-├─ lodz_city.geojson
-├─ lodz_grid.geojson
-└─ ndvi_lst_grid_stats.csv
-images/
-└─ ndvi_vs_lst_lodz_cleaned.png
+index.html - css/style.css - js/script.js - data/NDVI_classified.tif - LST_classified.tif - lodz_city.geojson - lodz_grid.geojson - ndvi_lst_grid_stats.csv - images/ndvi_vs_lst_lodz_cleaned.png
 
 
 ---
