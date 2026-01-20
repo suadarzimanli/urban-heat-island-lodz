@@ -242,8 +242,8 @@ body {
     z-index: 1100;
     width: min(360px, 92vw);
     height: calc(100% - 24px);
-    top: 12px;
-    left: 12px;
+    top: 65px;
+    left: 30px;
     border-radius: 22px;
   }
 }
@@ -336,3 +336,56 @@ body {
   opacity: 0.9;
 }
 
+/* ============================= */
+/* MOBILE FIX — SIDEBAR DRAWER */
+/* ============================= */
+
+@media (max-width: 980px) {
+
+  /* App should NOT collapse grid on mobile */
+  .app {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app.sidebar-collapsed {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Sidebar acts like a drawer */
+  .sidebar {
+    position: fixed;
+    height: calc(100% - 24px);
+    width: min(360px, 92vw);
+    z-index: 1200;
+
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Hide sidebar when collapsed */
+  .app.sidebar-collapsed .sidebar {
+    transform: translateX(-110%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Map must ALWAYS be visible and clickable */
+  .mapwrap {
+    position: relative;
+    z-index: 1;
+  }
+
+  #map {
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* Sidebar toggle always accessible */
+  .toggleSidebar {
+    position: fixed;
+    top: 14px;
+    left: 87%;
+    z-index: 1300;
+  }
+}
