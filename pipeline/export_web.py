@@ -140,7 +140,7 @@ def main():
                       "geometry": json.loads(json.dumps(sg.mapping(geom), default=float), parse_float=lambda s: round(float(s), 5))})
         rows.append([c + 1, round(x), round(y), round(lat, 5), round(lon, 5), props["inside"], props["n"], props["lst"], props["anom"], props["ndvi"],
                      props["built"], props["tree"], props["water"], r(t["dist_km"][c], 2), props["fit"], props["res"], props["gi"],
-                     props["spot"] or "", int(props["prio"])])
+                     props["spot"] or "none", int(props["prio"])])
     (DATA / "cells_500m.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": feats}, separators=(",", ":")), encoding="utf-8")
     with open(DATA / "cells_500m.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
