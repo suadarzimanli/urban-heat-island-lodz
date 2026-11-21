@@ -75,7 +75,7 @@ Satellite thermal imagery measures land surface temperature (LST) across a whole
 %======================================================================
 \section{Background}
 
-\paragraph{Surface heat.} LST is the radiative temperature of the surfaces a satellite sees --- roofs, roads, canopy and soil --- not the air temperature people feel, although the two are linked, especially at night \cite{voogt2003}. The surface urban heat island is usually strongest on clear summer days around midday, when Landsat passes over central Europe at about 11:40 local time.
+\paragraph{Surface heat.} LST is the radiative temperature of the surfaces a satellite sees --- roofs, roads, canopy and soil --- not the air temperature people feel, although the two are linked, especially at night \cite{voogt2003}. The surface urban heat island is usually strongest on clear summer days around midday, when Landsat passes over central Europe at about 11:35 local time.
 
 \paragraph{Vegetation and land cover.} NDVI, the normalised difference between near-infrared and red reflectance, measures green vegetation \cite{rouse1974}. Vegetated surfaces stay cooler through transpiration and shade, so NDVI and LST are negatively related \cite{weng2004}. The share of impervious or built-up land is an alternative explanation; because vegetation and sealing are two sides of the same land cover, the two are strongly correlated, and their configuration matters too \cite{zhou2011}.
 
@@ -89,7 +89,7 @@ Satellite thermal imagery measures land surface temperature (LST) across a whole
 
 \paragraph{Landsat 8 and 9.} Collection 2 Level-2 scenes from the Microsoft Planetary Computer archive \cite{planetary}, which requires no account. For every June–August day from 2018 to 2025 with less than 40\% scene cloud cover, the pipeline read the city's window and kept the scene if at least 90\% of the city was clear in the pixel quality band (no fill, cloud, cloud shadow, cirrus or snow). Twenty days qualified, from two satellite paths (Table~\ref{tab:dates} lists them with the city's median LST). Surface temperature is the official product, derived from the thermal band with atmospheric correction and emissivity from the ASTER Global Emissivity Dataset \cite{malakar2018,hulley2015}.
 
-\paragraph{Sentinel-2.} Level-2A scenes from June to August 2023 with less than 10\% cloud; NDVI from bands 4 and 8 at 10~m, with clouds, shadows and snow removed using the scene classification, and the median of clear observations kept \cite{drusch2012}. It serves as an independent vegetation source and as the detailed vegetation layer of the web map.
+\paragraph{Sentinel-2.} Level-2A scenes from June to August 2023 with less than 10\% cloud; NDVI from bands 4 and 8 at 10~m, with clouds, shadows and snow removed using the scene classification, and the median of clear observations kept \cite{drusch2012}. It serves as an independent vegetation source.
 
 \paragraph{ESA WorldCover 2021.} Land cover at 10~m \cite{zanaga2022}, used for the shares of built-up land, trees and water in each cell.
 
@@ -230,7 +230,7 @@ The $G_i^*$ statistic identifies 181 hot-spot and 120 cold-spot cells at a 5\% f
 \section{The web map (RQ4)}
 \label{sec:app}
 
-The results are published as a static web application (Leaflet and Chart.js) that reads the pipeline's outputs and runs without a server (Figure~\ref{fig:app}). Users choose what the map shows --- surface heat, vegetation, built-up share, hotter or cooler than expected, or hot and cold spots --- and whether to show the 500~m grid or the satellite pixels. A date selector shows any of the twenty days or their mean. Clicking a cell shows its values, the expected heat from its vegetation and built-up share, and its anomaly on each day; a scatter plot of all cells is linked to the map in both directions. Legends state values in °C or NDVI. The grid cells, their values on each day and the boundary can be downloaded as CSV and GeoJSON.
+The results are published as a static web application (Leaflet and Chart.js) that reads the pipeline's outputs and runs without a server (Figure~\ref{fig:app}). Users choose what the map shows --- surface heat, vegetation, built-up share, hotter or cooler than expected, or hot and cold spots --- and whether to show the satellite pixels (the default: 30~m Landsat surface heat and vegetation, 10~m built-up land) or the 500~m grid, whose cells are the averages of those pixels; residuals and hot spots exist only for cells. A date selector shows any of the twenty days or their mean. Clicking a cell shows its values, the expected heat from its vegetation and built-up share, and its anomaly on each day; a scatter plot of all cells is linked to the map in both directions. Legends state values in °C or NDVI. The grid cells, their values on each day and the boundary can be downloaded as CSV and GeoJSON.
 
 \begin{figure}[htbp]
 \centering
@@ -265,13 +265,13 @@ The interface follows the analysis: colour scales are diverging for anomalies an
 
 \paragraph{What remains.} The residual tenth is not noise. It is spatially organised and interpretable: the historic core, with its shade and street canyons, is cooler than its lack of greenery suggests; airfields and large flat-roofed industrial and commercial sites are hotter. For planning, this separates two kinds of hot place. In most hot spots, which are nearly all low in vegetation, adding greenery addresses the cause. In hotter-than-expected places, roofs and paved surfaces add heat beyond what low vegetation explains, so cool roofs, permeable paving or shading are likely to matter as much as planting.
 
-\paragraph{Surface versus air temperature.} LST at about 11:40 local time measures surfaces in the sun, not the air at street level and not the night-time heat that matters most for health. Dense centres with shaded streets may feel different from what their surfaces suggest, and their night-time heat island can be stronger than the daytime surface one. The maps show where surfaces heat most, which is a necessary but not a sufficient guide to where people are exposed.
+\paragraph{Surface versus air temperature.} LST at about 11:35 local time measures surfaces in the sun, not the air at street level and not the night-time heat that matters most for health. Dense centres with shaded streets may feel different from what their surfaces suggest, and their night-time heat island can be stronger than the daytime surface one. The maps show where surfaces heat most, which is a necessary but not a sufficient guide to where people are exposed.
 
 %======================================================================
 \section{Limitations}
 
 \begin{itemize}[leftmargin=1.2em]
-  \item \textbf{Daytime surfaces only.} Landsat observes around 11:40 local time; no night-time or air-temperature data were used, and no ground measurements were available for validation.
+  \item \textbf{Daytime surfaces only.} Landsat observes around 11:35 local time; no night-time or air-temperature data were used, and no ground measurements were available for validation.
   \item \textbf{Clear days only.} Twenty days with at least 90\% clear sky over eight summers; cloudy and humid hot days are not represented.
   \item \textbf{Associations, not effects.} The regressions describe the spatial pattern; they do not show how much planting a particular cell would cool it.
   \item \textbf{Land cover is static.} WorldCover describes 2021; land use changed in parts of the city over 2018--2025.

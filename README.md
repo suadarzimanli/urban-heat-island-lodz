@@ -12,7 +12,7 @@ Where is Łódź hot on clear summer days, how much of that do vegetation and bu
 - **A metric 500 m grid** (UTM zone 34N), 1,176 cells, plus 250 m and 1000 m for comparison. Built-up, tree and water shares come from ESA WorldCover 2021.
 - **Statistics that respect space:** regression checked by spatially blocked cross-validation and a block bootstrap, Moran's I, and Getis–Ord Gi* hot and cold spots at a 5% false-discovery rate.
 - **Complete coverage:** where the Landsat surface-temperature product is empty although the sky is clear (no emissivity input there), temperature is recomputed from the product's radiance layers with an NDVI-based emissivity (error ≈ 0.55 K), and flagged.
-- **Web map:** surface heat, vegetation, built-up share, hotter or cooler than expected, hot and cold spots; grid or satellite pixels; any single day or the mean; a cell panel with each day's anomaly; a scatter plot linked to the map; light and dark themes; phone layout.
+- **Web map:** surface heat, vegetation, built-up share, hotter or cooler than expected, hot and cold spots; satellite pixels (default: 30 m surface heat and vegetation, 10 m built-up land) or the 500 m grid; any single day or the mean; a cell panel with each day's anomaly; a scatter plot linked to the map; light and dark themes; phone layout.
 
 ## Key results
 

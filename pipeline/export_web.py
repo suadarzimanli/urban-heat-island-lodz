@@ -2,7 +2,8 @@
 Write the web app's data from the analysis (after analyze.py).
 
     python pipeline/export_web.py  ->  data/cells_500m.geojson, data/cells_500m.csv, data/boundary.geojson,
-                                       data/summary.json, data/rasters/*.png (EPSG:3857 overlays)
+                                       data/summary.json, data/rasters/*.png (EPSG:3857 overlays:
+                                       anom_<day|mean>, ndvi_<day|mean>, built)
 """
 from __future__ import annotations
 
@@ -31,6 +32,7 @@ RAST.mkdir(parents=True, exist_ok=True)
 # colour ramps shared with js/scales.js
 ANOM_STOPS = [(-6, (33, 102, 172)), (-3, (103, 169, 207)), (0, (230, 230, 226)), (3, (239, 138, 98)), (6, (178, 24, 43))]
 NDVI_STOPS = [(0.0, (247, 245, 235)), (0.2, (217, 230, 178)), (0.4, (145, 196, 122)), (0.6, (49, 140, 74)), (0.8, (0, 79, 40))]
+BUILT_STOPS = [(0.0, (241, 242, 246)), (0.25, (196, 199, 214)), (0.5, (140, 145, 172)), (0.75, (88, 92, 128)), (1.0, (42, 45, 77))]
 
 
 def ramp(values: np.ndarray, stops) -> np.ndarray:
@@ -110,7 +112,6 @@ def main():
         hot = cold = prio = False
         fitted = resid = gz = None
         if i is not None:
-            from scipy.stats import norm  # noqa: F401
             gz = float(m["gi_z"][i])
             sig = bool(m["gi_sig"][i])
             hot, cold = sig and gz > 0, sig and gz < 0
@@ -148,19 +149,27 @@ def main():
                     "predicted_anomaly_c", "residual_c", "gi_star_z", "hotspot", "hotter_than_expected_by_1c"])
         w.writerows(rows)
 
-    # pixel layers: per-date LST anomaly and the summer mean anomaly (30 m Landsat), Sentinel-2 NDVI (15 m)
+    # pixel layers (30 m Landsat): the same quantities the grid averages — LST anomaly against the median of the
+    # cells that day, and NDVI from the same scene — for each day and their mean; built-up land at 10 m
     water = lc == uhi.WC_WATER
-    rasters = {}
-    stack = []
-    for s in scenes:
-        a = np.where(inside & ~water, s["lst"] - np.nanmedian(s["lst"][inside & ~water]), np.nan)
-        stack.append(a)
-        rasters[s["date"]] = to_mercator_png(a[::3, ::3].repeat(3, 0).repeat(3, 1), spec, f"anom_{s['date']}", ANOM_STOPS, 30)
+    land = inside & ~water
+    rasters = {"anom": {}, "ndvi": {}}
+    a_stack, v_stack = [], []
+    for i, s in enumerate(scenes):
+        a = np.where(land, s["lst"] - np.nanmedian(t["lst"][i]), np.nan)
+        v = np.where(land, s["ndvi"], np.nan)
+        a_stack.append(a)
+        v_stack.append(v)
+        rasters["anom"][s["date"]] = to_mercator_png(a, spec, f"anom_{s['date']}", ANOM_STOPS, 30)
+        rasters["ndvi"][s["date"]] = to_mercator_png(v, spec, f"ndvi_{s['date']}", NDVI_STOPS, 30)
     with np.errstate(all="ignore"):
-        cnt = np.isfinite(np.stack(stack)).sum(0)
-        mean = np.where(cnt >= 0.5 * len(stack), np.nanmean(np.stack(stack), 0), np.nan)
-    rasters["mean"] = to_mercator_png(mean, spec, "anom_mean", ANOM_STOPS, 30)
-    rasters["ndvi"] = to_mercator_png(np.where(inside, s2, np.nan), spec, "ndvi_s2_2023", NDVI_STOPS, 15)
+        for key, stack, stops in (("anom", a_stack, ANOM_STOPS), ("ndvi", v_stack, NDVI_STOPS)):
+            arr = np.stack(stack)
+            cnt = np.isfinite(arr).sum(0)
+            mean = np.where(cnt >= 0.5 * len(stack), np.nanmean(arr, 0), np.nan)
+            rasters[key]["mean"] = to_mercator_png(mean, spec, f"{key}_mean", stops, 30)
+    built_px = np.where(inside & (lc == uhi.WC_BUILT), 1.0, np.nan)
+    rasters["built"] = to_mercator_png(built_px, spec, "built", BUILT_STOPS, 10)
 
     mm = res["main"]
     summary = {
@@ -175,7 +184,7 @@ def main():
         "scale": res["scale"],
     }
     (DATA / "summary.json").write_text(json.dumps(summary, default=float), encoding="utf-8")
-    print(f"{len(feats)} cells exported; rasters: {len(rasters)}")
+    print(f"{len(feats)} cells exported; {len(list(RAST.glob('*.png')))} pixel layers")
 
 
 if __name__ == "__main__":

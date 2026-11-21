@@ -2,7 +2,7 @@
  * Urban Heat Island — Łódź. Static web app over the pipeline's outputs (data/*.json, data/rasters/*.png).
  * No server code: everything here is read-only visualisation of numbers computed in pipeline/.
  */
-import { BUILT_STOPS, cssGradient, fitLine, fixed, formatDate, NDVI_STOPS, pct, rampColor, signed, SPOT_COLORS, VARIABLES } from "./scales.js";
+import { cssGradient, fitLine, fixed, formatDate, pct, rampColor, signed, SPOT_COLORS, VARIABLES } from "./scales.js";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -10,7 +10,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const state = {
   variable: "anom",
   date: "mean", // "mean" or an index into summary.dates
-  detail: "grid",
+  detail: "pixels", // satellite pixels by default; the 500 m grid stays available
   opacity: 0.8,
   priority: false,
   scatterX: "ndvi",
@@ -28,6 +28,10 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Landsat: USGS · <a href="https://esa-worldcover.org">ESA WorldCover</a>',
 }).addTo(map);
 L.control.scale({ imperial: false }).addTo(map);
+// satellite pixels sit below the grid outlines, the selected cell and the boundary
+map.createPane("pixels");
+map.getPane("pixels").style.zIndex = 350;
+map.getPane("pixels").style.pointerEvents = "none";
 new ResizeObserver(() => map.invalidateSize()).observe($("map"));
 
 let gridLayer = null;
@@ -69,7 +73,7 @@ function cellStyle(feature) {
   const selected = p.id === state.selected;
   const showFill = state.detail === "grid" || !pixelsAvailable();
   return {
-    color: selected ? "#111" : "rgba(40,40,40,0.35)",
+    color: selected ? "#111" : showFill ? "rgba(40,40,40,0.35)" : "rgba(40,40,40,0.12)",
     weight: selected ? 3 : 0.5,
     fillColor: fill ?? "#000",
     fillOpacity: showFill ? (fill ? state.opacity : 0) : 0,
@@ -77,8 +81,9 @@ function cellStyle(feature) {
   };
 }
 
+/** Pixel layers exist for measured quantities; residuals and hot spots are defined only for grid cells. */
 function pixelsAvailable() {
-  return state.variable === "anom" || state.variable === "ndvi";
+  return state.variable === "anom" || state.variable === "ndvi" || state.variable === "built";
 }
 
 /* ---------------- layers ---------------- */
@@ -102,7 +107,7 @@ function tooltipText(p) {
   const v = valueOf(p);
   const label = VARIABLES[state.variable].label;
   const shown = state.variable === "spot" ? (p.spot ? `${p.spot} spot` : "not a hot or cold spot") : VARIABLES[state.variable].fmt(v);
-  return `Cell ${p.id} · ${esc(label)}: ${esc(shown)}`;
+  return `500 m cell ${p.id} · ${esc(label)}: ${esc(shown)}`;
 }
 
 function restyle() {
@@ -126,11 +131,17 @@ function drawPixels() {
   pixelLayer = null;
   if (state.detail !== "pixels" || !pixelsAvailable()) return;
   const r = state.summary.rasters;
-  const key = state.variable === "ndvi" ? "ndvi" : state.date === "mean" ? "mean" : state.summary.dates[dateIdx()];
-  const file = state.variable === "ndvi" ? "ndvi_s2_2023" : key === "mean" ? "anom_mean" : `anom_${key}`;
-  pixelLayer = L.imageOverlay(`data/rasters/${file}.png`, r[key], { opacity: state.opacity, interactive: false, className: "pixel-layer" }).addTo(map);
-  gridLayer?.bringToFront();
-  priorityLayer?.bringToFront();
+  let file;
+  let bounds;
+  if (state.variable === "built") {
+    file = "built";
+    bounds = r.built;
+  } else {
+    const key = state.date === "mean" ? "mean" : state.summary.dates[dateIdx()];
+    file = `${state.variable}_${key}`;
+    bounds = r[state.variable][key];
+  }
+  pixelLayer = L.imageOverlay(`data/rasters/${file}.png`, bounds, { opacity: state.opacity, interactive: false, className: "pixel-layer", pane: "pixels" }).addTo(map);
 }
 
 /* ---------------- legend and notes ---------------- */
@@ -138,7 +149,9 @@ function drawPixels() {
 function renderLegend() {
   const v = VARIABLES[state.variable];
   let html = "";
-  if (state.variable === "spot") {
+  if (state.variable === "built" && state.detail === "pixels") {
+    html = `<div class="legend-cats"><span><i style="background:rgb(42,45,77)"></i> Built-up land (WorldCover 10 m pixel)</span></div>`;
+  } else if (state.variable === "spot") {
     html = `<div class="legend-cats">
       <span><i style="background:${SPOT_COLORS.hot}"></i> Hot spot — cluster of hotter cells</span>
       <span><i style="background:${SPOT_COLORS.cold}"></i> Cold spot — cluster of cooler cells</span>
@@ -159,14 +172,18 @@ function renderLegend() {
       <div class="legend-ticks">${ticks}</div>
       <div class="legend-ends"><span>${esc(ends[0])}</span><span>${esc(ends[1])}</span></div>`;
   }
-  html += `<div class="legend-cats"><span><i class="nodata"></i> Not enough clear observations</span>${state.priority ? '<span><i class="prio"></i> More than 1 °C hotter than vegetation and built-up share predict</span>' : ""}</div>`;
+  const pixels = state.detail === "pixels" && pixelsAvailable();
+  const missing = pixels
+    ? state.variable === "built" ? "Other land cover (transparent)" : "Water or too few clear observations (transparent)"
+    : "Not enough clear observations";
+  html += `<div class="legend-cats"><span><i class="nodata"></i> ${missing}</span>${state.priority ? '<span><i class="prio"></i> More than 1 °C hotter than vegetation and built-up share predict</span>' : ""}</div>`;
   $("legend").innerHTML = html;
 }
 
 function renderNotes() {
   const notes = [];
-  if (state.detail === "pixels" && !pixelsAvailable()) notes.push("Satellite pixels are available for surface heat and vegetation; this variable is shown on the grid.");
-  if (state.detail === "pixels" && state.variable === "ndvi") notes.push("Pixel vegetation: Sentinel-2, 10 m, median of clear summer 2023 days.");
+  if (state.detail === "pixels" && !pixelsAvailable()) notes.push("This result is defined for 500 m cells only, so it is shown on the grid.");
+  if (state.detail === "pixels" && pixelsAvailable()) notes.push(state.variable === "built" ? "Pixels: built-up land in ESA WorldCover (10 m); the grid shows its share per cell." : "Pixels: Landsat, 30 m; each grid cell is the average of its pixels.");
   if (state.date !== "mean" && (state.variable === "res" || state.variable === "spot")) notes.push("Computed from the mean of all clear summer days; the date choice does not apply.");
   if (state.variable === "built") notes.push("Land cover from 2021; the date choice does not apply.");
   $("detail-note").textContent = notes.join(" ");
@@ -394,4 +411,3 @@ async function loadJson(url) {
   }
 })();
 
-export { valueOf, NDVI_STOPS, BUILT_STOPS };

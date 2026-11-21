@@ -55,8 +55,8 @@
         </div>
         <div class="row row-split">
           <div class="seg" role="radiogroup" aria-label="Map detail">
-            <label><input type="radio" name="detail" value="grid" checked /> <span>500 m grid</span></label>
-            <label><input type="radio" name="detail" value="pixels" /> <span>Satellite pixels</span></label>
+            <label><input type="radio" name="detail" value="pixels" checked /> <span>Satellite pixels</span></label>
+            <label><input type="radio" name="detail" value="grid" /> <span>500 m grid</span></label>
           </div>
           <label class="check"><input type="checkbox" id="chk-priority" /> <span>Outline cells &gt; 1 °C hotter than expected</span></label>
         </div>
@@ -104,12 +104,12 @@
       <ol>
         <li><b>Surface temperature</b> — Landsat 8 and 9 Collection 2 surface temperature (thermal band, 30 m) on every June–August day from 2018 to 2025 on which at least 90% of the city was cloud-free; clouds, shadows and water are masked.</li>
         <li><b>Surface heat</b> — each cell's temperature minus the city median of the same day, so that hot and cool days can be combined; the map shows the mean over all clear days.</li>
-        <li><b>Vegetation</b> — NDVI from the same Landsat scenes (red and near-infrared), so greenery and temperature are observed at the same moment. Sentinel-2 (10 m) is used as a cross-check and as the detailed vegetation layer.</li>
+        <li><b>Vegetation</b> — NDVI from the same Landsat scenes (red and near-infrared), so greenery and temperature are observed at the same moment. Sentinel-2 (10 m) is used as an independent cross-check.</li>
         <li><b>Built-up share</b> — the share of the cell classified as built-up in ESA WorldCover 2021 (10 m).</li>
-        <li><b>Grid</b> — square 500 m cells in UTM zone 34N, kept when at least half lies inside the city boundary.</li>
+        <li><b>Grid and pixels</b> — the map shows the 30 m satellite pixels or square 500 m cells (UTM zone 34N, kept when at least half lies inside the city); each cell is the average of its pixels. The statistics use the cells.</li>
         <li><b>Statistics</b> — linear regression of surface heat on vegetation and built-up share, checked by spatially blocked cross-validation (2 km blocks); Moran's I for spatial clustering; Getis–Ord Gi* hot and cold spots with a 5% false-discovery rate.</li>
       </ol>
-      <p><b>Reading the map.</b> Land surface temperature is the temperature of roofs, roads and vegetation seen from space around 11:40 local time — not the air temperature people feel, although the two are related. <b>Hotter than expected</b> compares each cell with what its vegetation and built-up share predict; cells more than 1 °C hotter point to heat from roofs, paving or industry that greenery alone does not explain.</p>
+      <p><b>Reading the map.</b> Land surface temperature is the temperature of roofs, roads and vegetation seen from space around 11:35 local time — not the air temperature people feel, although the two are related. <b>Hotter than expected</b> compares each cell with what its vegetation and built-up share predict; cells more than 1 °C hotter point to heat from roofs, paving or industry that greenery alone does not explain.</p>
       <p class="note">The full method, results and limitations are in the paper; every number in this app is produced by the open Python pipeline in the repository.</p>
     </div>
   </dialog>

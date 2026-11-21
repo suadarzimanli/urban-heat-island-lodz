@@ -42,7 +42,11 @@ test("the web data match the analysis: cells, dates and per-date arrays", () => 
   }
   const used = cells.filter((f) => f.properties.anom != null).length;
   assert.equal(used, summary.cells);
-  for (const d of summary.dates) assert.ok(summary.rasters[d], `raster bounds for ${d}`);
+  for (const d of [...summary.dates, "mean"]) {
+    assert.ok(summary.rasters.anom[d], `surface-heat pixels for ${d}`);
+    assert.ok(summary.rasters.ndvi[d], `vegetation pixels for ${d}`);
+  }
+  assert.ok(summary.rasters.built, "built-up pixels");
 });
 
 test("pixel colour ramps match the pipeline", () => {
