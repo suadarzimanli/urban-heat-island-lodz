@@ -1,8 +1,28 @@
 cff-version: 1.2.0
-title: "Urban Heat Island Mapping of Łódź"
+title: "Urban Heat Island — Łódź: vegetation, built-up land and summer surface heat from Landsat"
+message: "If you use this software, data or study, please cite it as below."
+type: software
 authors:
   - family-names: Arzimanli
     given-names: Suad
-version: 1.0.0
-date-released: 2026-01-15
-url: https://suadarzimanli.github.io/urban-heat-island-lodz/
+    affiliation: "University of Łódź"
+version: 2.0.0
+date-released: 2026-11-21
+license: MIT
+repository-code: "https://github.com/suadarzimanli/urban-heat-island-lodz"
+url: "https://suadarzimanli.github.io/urban-heat-island-lodz/"
+keywords:
+  - urban heat island
+  - land surface temperature
+  - NDVI
+  - Landsat
+  - spatial autocorrelation
+  - Łódź
+abstract: >-
+  Open, reproducible analysis and interactive web map of summer surface heat in
+  Łódź, Poland. Landsat 8/9 land surface temperature and NDVI from twenty clear
+  summer days (2018–2025) on a 500 m grid, with ESA WorldCover built-up share;
+  regression checked by spatially blocked cross-validation, Moran's I, and
+  Getis–Ord Gi* hot and cold spots. Vegetation explains about 90% of the
+  spatial pattern of surface heat; the residual pattern shows a historic centre
+  cooler than expected and industrial sites and the airport hotter.

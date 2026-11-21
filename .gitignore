@@ -1,0 +1,20 @@
+# satellite downloads and intermediate arrays (rebuilt by pipeline/fetch.py and analyze.py)
+pipeline/cache/
+analysis/*.npz
+__pycache__/
+*.pyc
+
+# LaTeX build files
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+
+# OS / editor / local secrets
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.env
+.env.*
+node_modules/

@@ -1,212 +1,135 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Summer surface heat, vegetation and built-up land in Łódź, Poland: Landsat 8/9 surface temperature on a 500 m grid, 2018–2025, with hot spots and the cells that are hotter than their greenery predicts." />
   <title>Urban Heat Island — Łódź</title>
-
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("uhi-theme");
+      document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+    })();
+  </script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
-
 <body>
-  <div class="app">
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <div class="brand-title">Urban Heat Island</div>
-        <div class="brand-sub">Łódź • NDVI • LST • Grid stats</div>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <h1>Urban Heat Island — Łódź</h1>
+        <p>Summer surface temperature, vegetation and built-up land, 2018–2025</p>
       </div>
+    </div>
+    <nav class="top-actions" aria-label="Page">
+      <button id="btn-theme" class="btn btn-ghost" type="button">Light mode</button>
+      <button id="btn-about" class="btn btn-ghost" type="button">About &amp; methods</button>
+      <button id="btn-downloads" class="btn btn-ghost" type="button">Data</button>
+    </nav>
+  </header>
 
-      <div class="panel">
-        <div class="panel-title">Layers</div>
-
-        <label class="checkrow">
-          <input type="checkbox" id="chkCity" checked />
-          <span>City boundary</span>
-        </label>
-
-        <label class="checkrow">
-          <input type="checkbox" id="chkGridStats"/>
-          <span>Grid stats</span>
-        </label>
-
-        <label class="checkrow">
-          <input type="checkbox" id="chkNdviTif" />
-          <span>NDVI classified (GeoTIFF)</span>
-        </label>
-
-        <div class="sliderrow" id="ndviOpacityRow" style="display:none;">
-          <span>NDVI opacity</span>
-          <input type="range" id="ndviOpacity" min="0" max="1" step="0.05" value="0.7">
-        </div>
-
-        <label class="checkrow">
-          <input type="checkbox" id="chkLstTif" />
-          <span>LST classified (GeoTIFF)</span>
-        </label>
-
-        <div class="sliderrow" id="lstOpacityRow" style="display:none;">
-          <span>LST opacity</span>
-          <input type="range" id="lstOpacity" min="0" max="1" step="0.05" value="0.65">
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title">Compare</div>
-        <div class="btnrow">
-          <button class="btn btn-ghost" id="btnShowNdvi" type="button">Show NDVI (N)</button>
-          <button class="btn btn-ghost" id="btnShowLst" type="button">Show LST (T)</button>
-        </div>
-        <div class="hint">
-          Tip: use <b>N</b> / <b>T</b> keys to switch quickly.
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title">Legend</div>
-        <div id="legend" class="legend">
-          <div class="legend-hint">Turn on NDVI/LST to see legend.</div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title">NDVI–LST relationship</div>
-
-        <div class="hint">
-          A global linear regression was computed at the grid-cell level
-          to assess how vegetation relates to land surface temperature.
-        </div>
-
-        <div class="stats">
-          <div class="statline"><span>Explained variance</span><strong>R² = 0.132</strong></div>
-          <div class="statline"><span>Trend</span><strong>Negative (cooling)</strong></div>
-        </div>
-
-        <div style="height:10px"></div>
-
-        <button class="btn btn-ghost" id="btnShowRegression" type="button">
-          View NDVI vs LST plot
-        </button>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title">Analysis</div>
-
-        <button class="btn" id="btnExportMapPng" type="button">
-          Export map screenshot (PNG)
-        </button>
-
-        <div class="hint" id="exportHint">
-          Exports use what is currently visible on the map.
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title">Project</div>
-
-        <button class="btn" id="btnAbout" type="button">About / Methods</button>
-        <hr>
-        <a class="btn btn-ghost" href="data/ndvi_lst_grid_stats.csv" download>
-          Download full CSV report
-        </a>
-
-        <div class="stats">
-          <div class="statline"><span>NDVI vs LST</span><strong>R² = 0.132</strong></div>
-          <div class="statline"><span>Focus</span><strong>Urban heat patterns</strong></div>
-        </div>
-      </div>
-
-      <div class="footer">
-        <span>Leaflet • GeoTIFF • Grid analytics</span>
-        <hr>
-        <h3>© 2026 — Research project by Suad Arzimanli<h3>
-      </div>
-    </aside>
-
-    <main class="mapwrap">
-      <div id="map"></div>
-      <button class="toggleSidebar" id="toggleSidebar" type="button">☰</button>
-
-      <div class="modal" id="aboutModal" style="display:none;">
-        <div class="modal-card">
-          <div class="modal-header">
-            <div>
-              <div class="modal-title">Urban Heat Island Mapping — Łódź</div>
-              <div class="modal-sub">NDVI, LST, grid statistics + correlation</div>
-            </div>
-            <button class="iconbtn" id="btnCloseAbout" type="button">✕</button>
-          </div>
-
-          <div class="modal-body">
-            <h3>What this shows</h3>
-            <ul>
-              <li><b>NDVI</b> classified surface (vegetation intensity)</li>
-              <li><b>LST</b> classified surface (temperature intensity)</li>
-              <li><b>Grid statistics</b> from CSV (NDVI median, LST mean per cell)</li>
-            </ul>
-
-            <h3>Method (high level)</h3>
-            <ol>
-              <li>Compute NDVI & LST in ArcGIS Pro / Remote Sensing workflow</li>
-              <li>Classify each raster (reclass) into discrete classes</li>
-              <li>Aggregate to grid (median NDVI, mean LST)</li>
-              <li>Correlation in Python: NDVI vs LST → <b>R² = 0.132</b></li>
-            </ol>
-
-            <h3>Interpretation</h3>
-            <p>
-              R² indicates a weak linear relationship at this scale/time snapshot.
-              This can improve with seasonal sampling, land-cover stratification,
-              or hotspot analysis rather than pure global correlation.
-            </p>
-
-            <div class="modal-note">
-              Tip: turn on NDVI and LST and compare visually. Use grid popups for exact numbers.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal" id="regressionModal" style="display:none;">
-        <div class="modal-card">
-          <div class="modal-header">
-            <div>
-              <div class="modal-title">NDVI vs LST — Łódź</div>
-              <div class="modal-sub">Grid-based linear regression (Python / Jupyter)</div>
-            </div>
-            <button class="iconbtn" id="btnCloseRegression" type="button">✕</button>
-          </div>
-
-          <div class="modal-body">
-            <img
-              src="images/ndvi_vs_lst_lodz_cleaned.png"
-              alt="NDVI vs LST regression plot"
-              style="width:100%; border-radius:14px; border:1px solid var(--border);"
-            />
-
-            <p style="margin-top:12px;">
-              Each point represents a grid cell. Higher NDVI values are generally associated with
-              lower land surface temperature, but the relationship is weak (R² = 0.132),
-              indicating additional urban factors influence LST.
-            </p>
-
-            <div class="modal-note">
-              Computed from grid statistics (NDVI median, LST mean) using linear regression.
-            </div>
-          </div>
-        </div>
-      </div>
-
+  <div class="layout">
+    <main class="map-area">
+      <div id="map" role="region" aria-label="Map of Łódź"></div>
+      <div id="map-status" class="map-status" aria-live="polite">Loading data…</div>
     </main>
+
+    <aside class="panel" aria-label="Controls and results">
+      <section class="card">
+        <h2>Show on the map</h2>
+        <div class="choice" role="radiogroup" aria-label="Variable" id="var-choice">
+          <label><input type="radio" name="var" value="anom" checked /> <span><b>Surface heat</b><small>temperature above or below the city median</small></span></label>
+          <label><input type="radio" name="var" value="ndvi" /> <span><b>Vegetation</b><small>NDVI, from bare (0) to dense green (0.8)</small></span></label>
+          <label><input type="radio" name="var" value="built" /> <span><b>Built-up share</b><small>ESA WorldCover 2021</small></span></label>
+          <label><input type="radio" name="var" value="res" /> <span><b>Hotter or cooler than expected</b><small>after vegetation and built-up share</small></span></label>
+          <label><input type="radio" name="var" value="spot" /> <span><b>Hot and cold spots</b><small>Getis–Ord Gi*, 5% false-discovery rate</small></span></label>
+        </div>
+        <div class="row">
+          <label class="field" for="date-select"><span>Summer</span>
+            <select id="date-select"><option value="mean">All clear summer days (mean)</option></select>
+          </label>
+        </div>
+        <div class="row row-split">
+          <div class="seg" role="radiogroup" aria-label="Map detail">
+            <label><input type="radio" name="detail" value="grid" checked /> <span>500 m grid</span></label>
+            <label><input type="radio" name="detail" value="pixels" /> <span>Satellite pixels</span></label>
+          </div>
+          <label class="check"><input type="checkbox" id="chk-priority" /> <span>Outline cells &gt; 1 °C hotter than expected</span></label>
+        </div>
+        <label class="field slider" for="opacity"><span>Opacity</span><input type="range" id="opacity" min="0.2" max="1" step="0.05" value="0.8" /></label>
+        <p id="detail-note" class="note"></p>
+      </section>
+
+      <section class="card" aria-labelledby="legend-title">
+        <h2 id="legend-title">Legend</h2>
+        <div id="legend" class="legend"></div>
+      </section>
+
+      <section class="card" aria-labelledby="cell-title">
+        <h2 id="cell-title">Selected cell</h2>
+        <div id="cell-details" class="cell-details"><p class="note">Click a grid cell on the map or a point in the chart.</p></div>
+        <div class="chart-box chart-small"><canvas id="cell-chart" role="img" aria-label="Temperature anomaly of the selected cell on each clear summer day"></canvas></div>
+      </section>
+
+      <section class="card" aria-labelledby="scatter-title">
+        <h2 id="scatter-title">Heat against <span id="scatter-x-label">vegetation</span></h2>
+        <div class="seg seg-small" role="radiogroup" aria-label="Chart x-axis">
+          <label><input type="radio" name="sx" value="ndvi" checked /> <span>Vegetation</span></label>
+          <label><input type="radio" name="sx" value="built" /> <span>Built-up share</span></label>
+        </div>
+        <div class="chart-box"><canvas id="scatter" role="img" aria-label="Scatter plot of grid cells: temperature anomaly against vegetation or built-up share, with a fitted line"></canvas></div>
+        <p id="scatter-note" class="note"></p>
+      </section>
+
+      <section class="card" aria-labelledby="results-title">
+        <h2 id="results-title">Key results</h2>
+        <div id="results" class="results"></div>
+      </section>
+
+      <footer class="foot">
+        <p>Landsat 8/9 courtesy of the U.S. Geological Survey · Sentinel-2: contains modified Copernicus Sentinel data 2023 · ESA WorldCover 2021 (CC BY 4.0) · Boundary and map © OpenStreetMap contributors (ODbL).</p>
+        <p>Research project by Suad Arzimanli · <a href="https://github.com/suadarzimanli/urban-heat-island-lodz" target="_blank" rel="noopener">Source, data and paper</a></p>
+      </footer>
+    </aside>
   </div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/papaparse@5.3.1/papaparse.min.js"></script>
-  <script src="https://unpkg.com/geotiff/dist-browser/geotiff.js"></script>
-  <script src="https://unpkg.com/georaster/dist/georaster.browserify.min.js"></script>
-  <script src="https://unpkg.com/georaster-layer-for-leaflet/dist/georaster-layer-for-leaflet.min.js"></script>
-  <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <dialog id="about-dialog" aria-labelledby="about-title">
+    <form method="dialog" class="dialog-head"><h2 id="about-title">About &amp; methods</h2><button class="btn btn-ghost" value="close" aria-label="Close">Close</button></form>
+    <div class="dialog-body">
+      <p><b>Question.</b> Where is Łódź hottest on clear summer days, how much of that is explained by vegetation and by built-up land, and which places are hotter than those two would predict?</p>
+      <ol>
+        <li><b>Surface temperature</b> — Landsat 8 and 9 Collection 2 surface temperature (thermal band, 30 m) on every June–August day from 2018 to 2025 on which at least 90% of the city was cloud-free; clouds, shadows and water are masked.</li>
+        <li><b>Surface heat</b> — each cell's temperature minus the city median of the same day, so that hot and cool days can be combined; the map shows the mean over all clear days.</li>
+        <li><b>Vegetation</b> — NDVI from the same Landsat scenes (red and near-infrared), so greenery and temperature are observed at the same moment. Sentinel-2 (10 m) is used as a cross-check and as the detailed vegetation layer.</li>
+        <li><b>Built-up share</b> — the share of the cell classified as built-up in ESA WorldCover 2021 (10 m).</li>
+        <li><b>Grid</b> — square 500 m cells in UTM zone 34N, kept when at least half lies inside the city boundary.</li>
+        <li><b>Statistics</b> — linear regression of surface heat on vegetation and built-up share, checked by spatially blocked cross-validation (2 km blocks); Moran's I for spatial clustering; Getis–Ord Gi* hot and cold spots with a 5% false-discovery rate.</li>
+      </ol>
+      <p><b>Reading the map.</b> Land surface temperature is the temperature of roofs, roads and vegetation seen from space around 11:40 local time — not the air temperature people feel, although the two are related. <b>Hotter than expected</b> compares each cell with what its vegetation and built-up share predict; cells more than 1 °C hotter point to heat from roofs, paving or industry that greenery alone does not explain.</p>
+      <p class="note">The full method, results and limitations are in the paper; every number in this app is produced by the open Python pipeline in the repository.</p>
+    </div>
+  </dialog>
 
-  <script src="js/script.js"></script>
+  <dialog id="data-dialog" aria-labelledby="data-title">
+    <form method="dialog" class="dialog-head"><h2 id="data-title">Data</h2><button class="btn btn-ghost" value="close" aria-label="Close">Close</button></form>
+    <div class="dialog-body">
+      <ul class="downloads">
+        <li><a href="data/cells_500m.csv" download>Grid cells (CSV)</a> — one row per 500 m cell: summer temperature, anomaly, vegetation, land cover, model residual and hot-spot class.</li>
+        <li><a href="data/cells_500m.geojson" download>Grid cells (GeoJSON)</a> — the same with cell outlines and the anomaly on each clear day.</li>
+        <li><a href="data/boundary.geojson" download>City boundary (GeoJSON)</a> — © OpenStreetMap contributors, ODbL.</li>
+      </ul>
+      <p class="note">Rebuild everything from the satellite archives with <code>python pipeline/fetch.py</code>, <code>analyze.py</code> and <code>export_web.py</code>.</p>
+    </div>
+  </dialog>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+          integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
