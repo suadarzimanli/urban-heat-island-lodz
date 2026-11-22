@@ -1,5 +1,7 @@
 # Urban Heat Island — Łódź
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24438160.svg)](https://doi.org/10.5281/zenodo.24438160)
+
 Where is Łódź hot on clear summer days, how much of that do vegetation and built-up land explain, and which places are hotter than those two predict? This repository holds an open, reproducible analysis and an interactive web map.
 
 **Web map:** https://suadarzimanli.github.io/urban-heat-island-lodz/
